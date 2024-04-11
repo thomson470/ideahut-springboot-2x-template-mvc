@@ -43,11 +43,7 @@ public class Application extends SpringBootServletInitializer implements Applica
 		SpringApplication application = new SpringApplication(Application.class);
 		application.setLazyInitialization(false);
 		application.setLogStartupInfo(true);
-		try {
 		application.run(args);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 	
 	@Override
