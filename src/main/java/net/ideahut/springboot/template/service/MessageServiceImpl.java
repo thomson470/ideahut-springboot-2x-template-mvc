@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -64,12 +66,12 @@ public class MessageServiceImpl implements MessageService, BeanReload, BeanConfi
 	private AppProperties appProperties;
 	
 	@Override
-	public Callable<MessageService> configureBean(ApplicationContext applicationContext) {
+	public Callable<MessageService> onConfigureBean(ApplicationContext applicationContext) {
 		MessageServiceImpl self = this;
 		return new Callable<MessageService>() {
 			@Override
 			public MessageService call() throws Exception {
-				reloadBean();
+				onReloadBean();
 				return self;
 			}
 		};
@@ -81,7 +83,7 @@ public class MessageServiceImpl implements MessageService, BeanReload, BeanConfi
 	}
 	
 	@Override
-	public boolean reloadBean() throws Exception {
+	public boolean onReloadBean() throws Exception {
 		if (!lock(true)) {
 			return false;
 		}
@@ -183,7 +185,8 @@ public class MessageServiceImpl implements MessageService, BeanReload, BeanConfi
 		if (language != null) {
 			return language;
 		}
-		language = WebMvcUtil.getHeader(HttpHeaders.ACCEPT_LANGUAGE, "");
+		HttpServletRequest request = WebMvcUtil.getRequest();
+		language = WebMvcUtil.getHeader(request, HttpHeaders.ACCEPT_LANGUAGE, "");
 		String flang = language;
 		Option option = activeLanguages.stream()
 		  .filter(o -> flang.equals(o.getValue()))

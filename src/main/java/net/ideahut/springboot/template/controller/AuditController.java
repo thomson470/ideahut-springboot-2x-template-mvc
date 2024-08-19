@@ -1,5 +1,7 @@
 package net.ideahut.springboot.template.controller;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +18,7 @@ import net.ideahut.springboot.entity.TrxManagerInfo;
 import net.ideahut.springboot.exception.ResultRuntimeException;
 import net.ideahut.springboot.object.Page;
 import net.ideahut.springboot.object.Result;
-import net.ideahut.springboot.template.AppConstants;
+import net.ideahut.springboot.template.Application;
 import net.ideahut.springboot.util.FrameworkUtil;
 import net.ideahut.springboot.util.WebMvcUtil;
 
@@ -43,8 +45,8 @@ class AuditController {
 	
 	
 	@PostMapping(value = "/list")
-	protected Result list() throws Exception {
-		byte[] data = WebMvcUtil.getBodyAsBytes();
+	protected Result list(HttpServletRequest request) throws Exception {
+		byte[] data = WebMvcUtil.getBodyAsBytes(request);
 		AuditRequest auditRequest = auditHandler.getRequest(data);
 		TrxManagerInfo trxManagerInfo;
 		String manager = auditRequest.getManager();
@@ -63,7 +65,7 @@ class AuditController {
 				auditRequest.setClassOfEntity(classOfEntity);
 			} catch(Exception e1) {
 				try {
-					Class<?> type = FrameworkUtil.classOf(AppConstants.PACKAGE + ".entity." + entity);
+					Class<?> type = FrameworkUtil.classOf(Application.Package.APPLICATION + ".entity." + entity);
 					auditRequest.setClassOfEntity(type);	
 				} catch (Exception e2) {
 					throw new ResultRuntimeException(Result.error("AUDIT-02", "Entity is not found, for: " + entity));
