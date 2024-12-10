@@ -15,9 +15,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import lombok.extern.slf4j.Slf4j;
 import net.ideahut.springboot.context.RequestContext;
+import net.ideahut.springboot.helper.ErrorHelper;
+import net.ideahut.springboot.helper.FrameworkHelper;
+import net.ideahut.springboot.helper.ObjectHelper;
 import net.ideahut.springboot.object.Result;
 import net.ideahut.springboot.template.properties.AppProperties;
-import net.ideahut.springboot.util.FrameworkUtil;
 
 /*
  * 1. Untuk menghandle semua error yang terjadi di aplikasi
@@ -46,7 +48,7 @@ public class AppAdvice implements ResponseBodyAdvice<Object> {
 		if (Boolean.TRUE.equals(appProperties.getLoggingError())) {
     		log.error(AppAdvice.class.getSimpleName(), throwable);
     	}
-		return FrameworkUtil.getErrorAsResult(throwable);
+		return FrameworkHelper.getErrorAsResult(throwable);
     }
 
 	@Override
@@ -63,12 +65,18 @@ public class AppAdvice implements ResponseBodyAdvice<Object> {
 		ServerHttpRequest request,
 		ServerHttpResponse response
 	) {
-		if (body instanceof byte[]) {
+		if (ObjectHelper.isInstance(byte[].class, body)) {
 			RequestContext.destroy();
-			return body;
+			try {
+				byte[] bytes = (byte[]) body;
+				response.getBody().write(bytes);
+			} catch (Exception e) {
+				throw ErrorHelper.exception(e);
+			}
+			return null;
 		}
 		Result result = null;
-		if (body instanceof Result) {
+		if (ObjectHelper.isInstance(Result.class, body)) {
 			result = (Result) body;
 			result.updateTime();
 		} else {

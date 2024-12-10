@@ -16,23 +16,24 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import net.ideahut.springboot.admin.AdminHandler;
-import net.ideahut.springboot.admin.WebMvcAdminSecurity;
 import net.ideahut.springboot.api.ApiAccess;
 import net.ideahut.springboot.api.ApiUser;
 import net.ideahut.springboot.api.WebMvcApiService;
 import net.ideahut.springboot.audit.AuditInfo;
 import net.ideahut.springboot.context.RequestContext;
 import net.ideahut.springboot.exception.ResultRuntimeException;
+import net.ideahut.springboot.helper.FrameworkHelper;
+import net.ideahut.springboot.helper.ObjectHelper;
+import net.ideahut.springboot.helper.WebMvcHelper;
 import net.ideahut.springboot.message.MessageHandler;
 import net.ideahut.springboot.object.MapStringObject;
 import net.ideahut.springboot.object.Result;
 import net.ideahut.springboot.security.SecurityCredential;
 import net.ideahut.springboot.security.SecurityUser;
+import net.ideahut.springboot.security.WebMvcSecurity;
 import net.ideahut.springboot.template.AppConstants;
 import net.ideahut.springboot.template.Application;
 import net.ideahut.springboot.template.properties.AppProperties;
-import net.ideahut.springboot.util.FrameworkUtil;
-import net.ideahut.springboot.util.WebMvcUtil;
 
 @Component
 @ComponentScan
@@ -40,22 +41,22 @@ public class RequestInterceptor implements HandlerInterceptor {
 	
 	private final AppProperties appProperties;
 	private final AdminHandler adminHandler;
-	private final WebMvcAdminSecurity adminSecurity;
+	private final WebMvcSecurity adminSecurity;
 	private final SecurityCredential adminCredential;
 	private final WebMvcApiService apiService;
 	
 	// set false, agar ApiService tidak melakukan pengecekan (development)
 	// default ApiAccess Role = PUBLIC
-	private static final boolean CHECK_BY_API_SERVICE = false;
+	private static final boolean CHECK_BY_API_SERVICE = true;
 	// set true, jika tidak ingin mengecek ApiRoleRequest / ApiPropvider request (development)
-	private static final boolean ALLOW_ALL_REQUEST = true;
+	private static final boolean ALLOW_ALL_REQUEST = false;
 	
 	@Autowired
 	RequestInterceptor(
 		AppProperties appProperties,
 		AdminHandler adminHandler,
 		@Qualifier(AppConstants.Bean.Security.ADMIN)
-		WebMvcAdminSecurity adminSecurity,
+		WebMvcSecurity adminSecurity,
 		@Qualifier(AppConstants.Bean.Credential.ADMIN)
 		SecurityCredential adminCredential,
 		WebMvcApiService apiService
@@ -75,7 +76,7 @@ public class RequestInterceptor implements HandlerInterceptor {
 		}
 		AuditInfo.context().setAuditor(AppConstants.Profile.SYSTEM);
 		
-		if (handler instanceof HandlerMethod) {
+		if (ObjectHelper.isInstance(HandlerMethod.class, handler)) {
 			HandlerMethod hm = (HandlerMethod) handler;
 			if (appProperties.getIgnoredHandlerClasses().contains(hm.getBeanType())) {
 				return true;			
@@ -84,13 +85,13 @@ public class RequestInterceptor implements HandlerInterceptor {
 			if (adminHandler.isAdminPath(request.getServletPath())) {
 				handleAdmin(request);
 			} else {
-				if (FrameworkUtil.isApiSkip(hm)) {
+				if (FrameworkHelper.isApiSkip(hm)) {
 					return true;
 				}
 				handleApi(request, hm);
 			}
 		}
-		else if (handler instanceof ResourceHttpRequestHandler) {
+		else if (ObjectHelper.isInstance(ResourceHttpRequestHandler.class, handler)) {
 			return handleResource(request, response);
 		}
 		return true;
@@ -105,7 +106,7 @@ public class RequestInterceptor implements HandlerInterceptor {
 	}
 	
 	private void handleApi(HttpServletRequest request, HandlerMethod hm) {
-		boolean isPublic = FrameworkUtil.isPublic(hm);
+		boolean isPublic = FrameworkHelper.isPublic(hm);
 		ApiAccess apiAccess = null;
 		if (CHECK_BY_API_SERVICE) {
 			apiAccess = apiService.getApiAccess(request, isPublic);
@@ -114,9 +115,9 @@ public class RequestInterceptor implements HandlerInterceptor {
 				apiAccess.setApiRole(AppConstants.Default.API_ROLE);
 			}
 			if (!ALLOW_ALL_REQUEST && !isPublic) {
-				boolean allowed = apiService.isApiRequestAllowed(apiAccess, hm);
+				boolean allowed = apiService.isApiAccessAllowed(apiAccess, hm);
 				if (!allowed) {
-					throw ResultRuntimeException.of(Result.error("REQ-00", "Request is not allowed"));
+					throw ResultRuntimeException.of(Result.error("REQ-00", "Request not allowed"));
 				}
 			}
 		} else {
@@ -138,7 +139,7 @@ public class RequestInterceptor implements HandlerInterceptor {
 	
 	private boolean handleResource(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		if (adminHandler.isAdminPath(request.getServletPath())) {
-			Map<String, List<String>> parameters = WebMvcUtil.getRequestParameters(request);
+			Map<String, List<String>> parameters = WebMvcHelper.getRequestParameters(request);
 			String redirect = adminHandler.getRedirect(adminCredential, request.getServletPath(), parameters, request.getQueryString());
 			if (redirect != null) {
 				response.sendRedirect(redirect);

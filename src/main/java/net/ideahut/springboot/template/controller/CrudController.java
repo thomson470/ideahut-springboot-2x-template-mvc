@@ -1,5 +1,6 @@
 package net.ideahut.springboot.template.controller;
 
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,15 +19,16 @@ import net.ideahut.springboot.annotation.Public;
 import net.ideahut.springboot.crud.CrudAction;
 import net.ideahut.springboot.crud.CrudHandler;
 import net.ideahut.springboot.crud.CrudPermission;
-import net.ideahut.springboot.crud.WebMvcCrudController;
+import net.ideahut.springboot.helper.ObjectHelper;
+import net.ideahut.springboot.helper.WebMvcHelper;
+import net.ideahut.springboot.object.Page;
 import net.ideahut.springboot.object.Result;
-import net.ideahut.springboot.util.WebMvcUtil;
 
 @Public
 @ComponentScan
 @RestController
 @RequestMapping("/crud")
-class CrudController extends WebMvcCrudController {
+class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 	
 	private final CrudHandler handler;
 	private final CrudPermission permission;
@@ -69,9 +71,9 @@ class CrudController extends WebMvcCrudController {
 	@PostMapping(value = "/action/{action}")
 	Result action(
 		@PathVariable("action") String action,
-		HttpServletRequest request
+		HttpServletRequest httpRequest
 	) throws Exception {
-		byte[] data = WebMvcUtil.getBodyAsBytes(request);
+		byte[] data = WebMvcHelper.getBodyAsBytes(httpRequest);
 		return super.body(CrudAction.valueOf(action.toUpperCase()), data);
 	}
 	
@@ -91,9 +93,9 @@ class CrudController extends WebMvcCrudController {
 	)
 	Result parameter(
 		@PathVariable("action") String action,
-		HttpServletRequest request
+		HttpServletRequest httpRequest
 	) throws Exception {
-		return super.parameter(CrudAction.valueOf(action.toUpperCase()), request);		
+		return super.parameter(CrudAction.valueOf(action.toUpperCase()), httpRequest);		
 	}
 	
 	
@@ -128,7 +130,10 @@ class CrudController extends WebMvcCrudController {
 		@RequestParam(value = "fields", required = false) String fields,
 		@RequestParam(value = "loads", required = false) String loads		
 	) {
-		return super.collection(manager, name, index, size, count, filters, orders, fields, loads);
+		String scount = ObjectHelper.useOrDefault(count, "").trim().toLowerCase();
+		Boolean pcount = "1".equals(scount) || "true".equals(scount);
+		Page page = Page.of(index, size, pcount);
+		return super.collection(manager, name, page, filters, orders, fields, loads);
 	}
 	
 	
@@ -141,9 +146,9 @@ class CrudController extends WebMvcCrudController {
 		@PathVariable("name") String name,
 		@RequestParam(value = "manager", required = false) String manager,
 		@RequestParam(value = "value", required = false) String value,
-		HttpServletRequest request
+		HttpServletRequest httpRequest
 	) throws Exception {
-		byte[] data = WebMvcUtil.getBodyAsBytes(request);
+		byte[] data = WebMvcHelper.getBodyAsBytes(httpRequest);
 		return super.create(manager, name, value, data);
 	}
 	
@@ -158,9 +163,9 @@ class CrudController extends WebMvcCrudController {
 		@PathVariable("id") String id,
 		@RequestParam(value = "manager", required = false) String manager,
 		@RequestParam(value = "value", required = false) String value,
-		HttpServletRequest request
+		HttpServletRequest httpRequest
 	) throws Exception {
-		byte[] data = WebMvcUtil.getBodyAsBytes(request);
+		byte[] data = WebMvcHelper.getBodyAsBytes(httpRequest);
 		return super.update(manager, name, id, value, data);
 	}
 	
