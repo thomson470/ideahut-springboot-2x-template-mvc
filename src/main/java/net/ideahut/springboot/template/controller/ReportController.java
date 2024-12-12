@@ -2,8 +2,6 @@ package net.ideahut.springboot.template.controller;
 
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import net.ideahut.springboot.annotation.Public;
 import net.ideahut.springboot.helper.ErrorHelper;
 import net.ideahut.springboot.helper.FrameworkHelper;
 import net.ideahut.springboot.helper.StringHelper;
@@ -29,13 +28,13 @@ import net.ideahut.springboot.report.ReportInput;
 import net.ideahut.springboot.report.ReportType;
 import net.ideahut.springboot.template.object.ReportData;
 import net.ideahut.springboot.template.properties.AppProperties;
-import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.util.JRLoader;
 
 /*
  * Contoh penggunaan ReportHandler
  */
+@Public
 @ComponentScan
 @RestController
 @RequestMapping("/report")
@@ -65,22 +64,9 @@ class ReportController implements InitializingBean {
 		path = FrameworkHelper.replacePath(appProperties.getReportPath());
 		path = StringHelper.removeEnd(path, "/");
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(this.getClass().getClassLoader());
+		template = FrameworkHelper.getResourceAsByteArray(resolver.getResource(path + "/sample.jasper"));
 		imageHeader = FrameworkHelper.getResourceAsByteArray(resolver.getResource(path + "/tree1.png"));
 		imageDetail = FrameworkHelper.getResourceAsByteArray(resolver.getResource(path + "/tree2.png"));
-		byte[] bytes = FrameworkHelper.getResourceAsByteArray(resolver.getResource(path + "/sample.jrxml"));
-		InputStream stream = new ByteArrayInputStream(bytes);
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		JasperCompileManager.compileReportToStream(stream, baos);
-		template = baos.toByteArray();
-		
-		//JRClassLoader.loadClassFromBytes(path, bytes);//-
-		//CompiledClassesLoader.loadClassForName(path)
-		//JasperReport report = (JasperReport) JRLoader.loadObject(new ByteArrayInputStream(template));//-
-		//JRAbstractJavaCompiler.
-		//JRAbstractCompiler
-		//JRReportCompileData reportCompileData = (JRReportCompileData) report.getCompileData();//-
-		//String unitName = reportCompileData.getUnitName(report, report.getMainDataset());//-
-		//log.info("++++++++ " + unitName);//-
 	}
 	
 	@GetMapping

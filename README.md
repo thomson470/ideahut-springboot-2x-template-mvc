@@ -3,8 +3,10 @@
 - Template implementasi dari Ideahut Springboot 2x Library (WebMvc).
 - Dokumentasi dapat dilihat di [Ideahut Springboot](https://github.com/ideahut-apps-team/ideahut-springboot-docs/)
 
-### Admin
-- `URL`  : https://localhost:5401/_
+## Admin
+- `URL`  : http://localhost:5402/_/web
 - `User` : admin
 - `Pass` : password
-
+<div align="left">
+   <img src="./screenshot.jpg" alt="Admin" title="Admin" width="800" />
+</div>
