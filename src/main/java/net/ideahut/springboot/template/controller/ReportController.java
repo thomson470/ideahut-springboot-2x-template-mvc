@@ -1,6 +1,5 @@
 package net.ideahut.springboot.template.controller;
 
-
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import net.ideahut.springboot.annotation.Public;
 import net.ideahut.springboot.helper.ErrorHelper;
 import net.ideahut.springboot.helper.FrameworkHelper;
 import net.ideahut.springboot.helper.StringHelper;
@@ -34,7 +32,6 @@ import net.sf.jasperreports.engine.util.JRLoader;
 /*
  * Contoh penggunaan ReportHandler
  */
-@Public
 @ComponentScan
 @RestController
 @RequestMapping("/report")
