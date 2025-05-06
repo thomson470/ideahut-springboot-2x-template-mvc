@@ -19,9 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import net.ideahut.springboot.annotation.Public;
-import net.ideahut.springboot.api.ApiConsumerRequest;
-import net.ideahut.springboot.api.ApiConsumerService;
-import net.ideahut.springboot.helper.ErrorHelper;
+import net.ideahut.springboot.api.ApiService;
+import net.ideahut.springboot.api.ApiTokenService;
 import net.ideahut.springboot.helper.ObjectHelper;
 import net.ideahut.springboot.helper.WebMvcHelper;
 import net.ideahut.springboot.object.Result;
@@ -41,18 +40,16 @@ import net.ideahut.springboot.sysparam.dto.SysParamDto;
 @RequestMapping("/dev")
 class DevController {
 	
-	private static final String SYSTEM_CODE = "API_TOKEN";
-	
 	private final SysParamHandler sysParamHandler;
-	private final ApiConsumerService apiConsumerService;
+	private final ApiService apiService;
 	
 	@Autowired
 	DevController(
 		SysParamHandler sysParamHandler,
-		ApiConsumerService apiConsumerService
+		ApiService apiService
 	) {
 		this.sysParamHandler = sysParamHandler;
-		this.apiConsumerService = apiConsumerService;
+		this.apiService = apiService;
 	}
 	
 	/*
@@ -64,11 +61,11 @@ class DevController {
 	void apiToken(
 		@RequestParam("apiName") String apiName
 	) {
-		String token = apiConsumerService.token(apiName);
+		String token = apiService.getApiTokenService().retrieveApiToken(apiService, apiName);
 		if (token != null && !token.isEmpty() && ObjectHelper.isInstance(SysParamUpdater.class, sysParamHandler)) {
 			((SysParamUpdater) sysParamHandler).updateSysParam(
 				SysParamDto.create()
-				.setSysCode(SYSTEM_CODE)
+				.setSysCode(ApiTokenService.API_TOKEN_SYSTEM_CODE)
 				.setParamCode(apiName)
 				.setValue(token)
 			);
@@ -76,8 +73,8 @@ class DevController {
 	}
 
 	/*
-	 * Proxy request ke Api Service lain
-	 * - menggunakan API consumer token yang tersimpan di SysParam
+	 * Proxy request ke ApiSource lain
+	 * - menggunakan ApiToken yang tersimpan di SysParam
 	 * - semua http method diijinkan
 	 * 
 	 */
@@ -103,8 +100,7 @@ class DevController {
 		String path = httpRequest
 		.getServletPath()
 		.replace("/dev/api/request/" + apiName, "");
-		String token = sysParamHandler.getValue(String.class, SYSTEM_CODE, apiName, "");
-		ErrorHelper.throwIf(token.isEmpty(), "Token not found for api: " + apiName);
+		String apiToken = ApiTokenService.getApiToken(sysParamHandler, apiName);
 		RestRequest restRequest = new RestRequest()
 		.setPath(path)
 		.setMethod(RestMethod.valueOf(httpRequest.getMethod().toUpperCase()))
@@ -131,11 +127,7 @@ class DevController {
 				return null;
 			}
 		);
-		ApiConsumerRequest apiConsumerRequest = new ApiConsumerRequest()
-		.setApiName(apiName)
-		.setToken(token)
-		.setRequest(restRequest);
-		RestResponse restResponse = apiConsumerService.call(apiConsumerRequest);
+		RestResponse restResponse = apiService.callApiEndpoint(apiName, restRequest, apiToken);
 		for (String restHeaderName : restResponse.getHeaderNames()) {
 			List<String> restHeaderValues = restResponse.getHeaderValues(restHeaderName);
 			for (String restHeaderValue : restHeaderValues) {
