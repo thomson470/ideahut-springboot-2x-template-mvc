@@ -31,23 +31,32 @@ import net.ideahut.springboot.object.Result;
 @RequestMapping("/crud")
 class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 	
-	private final CrudHandler handler;
-	private final CrudPermission permission;
+	private final CrudHandler crudHandler;
+	private final CrudPermission crudPermission;
 	
 	@Autowired
 	CrudController(
-		CrudHandler handler, 
-		CrudPermission permission
+		CrudHandler crudHandler, 
+		CrudPermission crudPermission
 	) {
-		this.handler = handler;
-		this.permission = permission;
+		this.crudHandler = crudHandler;
+		this.crudPermission = crudPermission;
 	}
 	
 	@Override
-	protected CrudHandler handler() {
-		return handler;
+	protected CrudHandler crudHandler() {
+		return crudHandler;
 	}
-	
+
+	/*
+	 * Crud Permission bisa di level Handler ataupun di lever Controller.
+	 * Untuk di level Handler akan berlaku disetiap penggunaan CrudHandler
+	 * Untuk di level Controller hanya akan berlaku di setiap pemanggilan endpoint Crud
+	 */
+	@Override
+	protected CrudPermission crudPermission() {
+		return crudPermission;
+	}
 	
 	
 	/*
@@ -62,8 +71,7 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 	@GetMapping(value = "/info/constant")
 	Result infoConstant() {
 		return super.constant();
-	}	
-	
+	}
 	
 	
 	/*
@@ -77,7 +85,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 		byte[] data = WebMvcHelper.getBodyAsBytes(httpRequest);
 		return super.body(CrudAction.valueOf(action.toUpperCase()), data);
 	}
-	
 	
 	
 	/*
@@ -100,7 +107,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 	}
 	
 	
-	
 	/*
 	 * OBJECT (CrudAction.SINGLE)
 	 */
@@ -116,7 +122,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 		.setId(id);
 		return super.object(input);
 	}
-	
 	
 	
 	/*
@@ -150,7 +155,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 	}
 	
 	
-	
 	/*
 	 * CREATE
 	 */
@@ -169,7 +173,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 		.setData(data);
 		return super.create(input);
 	}
-	
 	
 	
 	/*
@@ -194,8 +197,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 	}
 	
 	
-	
-	
 	/*
 	 * DELETE 
 	 */
@@ -210,18 +211,6 @@ class CrudController extends net.ideahut.springboot.crud.WebMvcCrudController {
 		.setName(name)
 		.setId(id);
 		return super.delete(input);
-	}
-
-	
-	
-	/*
-	 * Crud Permission bisa di level Handler ataupun di lever Controller.
-	 * Untuk di level Handler akan berlaku disetiap penggunaan CrudHandler
-	 * Untuk di level Controller hanya akan berlaku di setiap pemanggilan endpoint Crud
-	 */
-	@Override
-	protected CrudPermission permission() {
-		return permission;
 	}
 	
 }
